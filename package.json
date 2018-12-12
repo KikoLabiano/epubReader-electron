@@ -1,0 +1,14 @@
+{
+    "name": "epubReader-electron",
+    "dependencies": {
+        "electron": "^4.0.0-nightly.20181010"
+    },
+    "scripts": {
+        "start": "electron ."
+    },
+    "main": "main.js",
+    "version": "0.0.0",
+    "license": "MIT",
+    "description": "",
+    "author": "KikoTere"
+}
