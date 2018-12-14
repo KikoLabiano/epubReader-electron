@@ -1,13 +1,19 @@
 {
     "name": "epubReader-electron",
     "dependencies": {
-        "electron": "^4.0.0-nightly.20181010"
+        "electron": "^4.0.0-nightly.20181010",
+        "extract-zip": "^1.6.7",
+        "fs-jetpack": "^2.2.0",
+        "jquery": "^3.3.1",
+        "jszip": "^3.1.5",
+        "jszip-utils": "0.0.2",
+        "path": "^0.12.7"
     },
     "scripts": {
         "start": "electron ."
     },
     "main": "main.js",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "license": "MIT",
     "description": "",
     "author": "KikoTere"
