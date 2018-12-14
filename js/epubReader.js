@@ -3,12 +3,17 @@ const JSZipUtils = require('jszip-utils');
 const JSZip = require('jszip');
 
 $(function () {
-    JSZipUtils.getBinaryContent('./epubs/Hobbit.epub', function (err, data) {
-        if (err) {
-            throw err; // or handle err
-        }
+    // JSZipUtils.getBinaryContent('./epubs/Hobbit.epub', function (err, data) {
+    //     if (err) {
+    //         throw err; // or handle err
+    //     }
+    // }
 
-epubReader.unzipEpub('./epubs/Hobbit.epub','./epubs/Hobbit');
+    //Extract epub
+    epubReader.unzipEpub('./epubs/Hobbit.epub','./epubs/Hobbit');
+    //Create sections
+    //Load Canvas
+    epubReader.loadEpubCanvas();
 
 //read contents of zip file
 /*var zip2 = new JSZip();
@@ -30,18 +35,18 @@ $.each(z.files, function (index, zipEntry) {
 });*/
 
 
-        var zip = new JSZip();
+        /*var zip = new JSZip();
         zip.loadAsync(data)
             .then(function (zip) {
                 let textos = [];
 
-                /*let filteredNcx = filtered_keys(zip.files, /.ncx/);
-                console.log(filteredNcx);
-                filteredNcx.forEach((idx)=>{
-                    zip.files[idx].async("string").then((v)=>{
-                        $("#content").html(v);
-                    })
-                });*/
+                // let filteredNcx = filtered_keys(zip.files, /.ncx/);
+                // console.log(filteredNcx);
+                // filteredNcx.forEach((idx)=>{
+                //     zip.files[idx].async("string").then((v)=>{
+                //         $("#content").html(v);
+                //     })
+                // });
 
 
                 let filteredNames = filtered_keys(zip.files, /.xhtml/);
@@ -65,7 +70,7 @@ $.each(z.files, function (index, zipEntry) {
     }, function (e) {
         alert(e.message);
     });
-
+*/
 });
 
 let filtered_keys = (obj, filter) => {

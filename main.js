@@ -10,8 +10,8 @@ let win
 function createWindow() {
   // Crea la ventana del navegador.
   win = new BrowserWindow({
-    width: 800,
-    height: 750
+    width: 1280,
+    height: 1024
     //,   frame: false
   })
 win.webContents.openDevTools();
