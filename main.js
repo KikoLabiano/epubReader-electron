@@ -1,11 +1,12 @@
 const {
   app,
-  BrowserWindow
+  BrowserWindow,
+  globalShortcut
 } = require('electron')
 
 // Mantén una referencia global del objeto window, si no lo haces, la ventana
 // se cerrará automáticamente cuando el objeto JavaScript sea eliminado por el recolector de basura.
-let win
+let win;
 
 function createWindow() {
   // Crea la ventana del navegador.
@@ -13,7 +14,17 @@ function createWindow() {
     width: 1280,
     height: 1024
     //,   frame: false
-  })
+  });
+
+  globalShortcut.register('f5', function() {
+		console.log('f5 is pressed')
+		win.reload()
+	});
+	globalShortcut.register('CommandOrControl+R', function() {
+		console.log('CommandOrControl+R is pressed')
+		win.reload()
+	});
+
 win.webContents.openDevTools();
   // y carga el archivo index.html de la aplicación.
   win.loadFile('index.html')

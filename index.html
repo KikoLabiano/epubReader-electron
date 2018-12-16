@@ -6,28 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link type="text/css" href="./css/epubReader.css" rel="stylesheet" media="screen" />
+     <link type="text/css" href="./epubs/Hobbit/OEBPS/Styles/style.css" rel="stylesheet" media="screen" />
     <title>EPUB Reader</title>
 </head>
 
 <body>
+    <div>
+        <select id="ddlChapters"></select>
+    </div>
     <div id="book">
         <canvas id="pageflip-canvas"></canvas>
-        <div id="pages">
-            <section>
-                <div>
-                    <h2>History</h2>
-                    <p>Canvas was initially introduced by Apple for use inside their own Mac OS X WebKit component, powering applications like Dashboard widgets and the Safari browser. Later, it was adopted by Gecko browsers and Opera and standardized by the WHATWG on new proposed specifications for next generation web technologies.</p>
-                </div>
-            </section>
-            <section>
-                <div>
-                    <h2>Usage</h2>
-                    <p>Canvas consists of a drawable region defined in HTML code with height and width attributes. JavaScript code may access the area through a full set of drawing functions similar to other common 2D APIs, thus allowing for dynamically generated graphics. Some anticipated uses of canvas include building graphs, animations, games, and image composition.</p>
-                </div>
-            </section>
+        <div id="pages">  
         </div>
-      </div>
-    
+    </div>
+
     <script src="./js/epubReaderAPI.js"></script>
     <script src="./js/epubReader.js"></script>
 </body>

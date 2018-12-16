@@ -9,10 +9,24 @@ const resolve = require('path').resolve
 //Más info: https://stackoverflow.com/questions/45639628/how-to-fix-browserwindow-is-not-a-constructor-error-when-creating-child-window-i
 const BrowserWindow = electron.remote.BrowserWindow;
 
+// Dimensions of the whole book
+let BOOK_WIDTH = 1280;
+let BOOK_HEIGHT = 960;
+
+// Dimensions of one page in the book
+let PAGE_WIDTH = 490;
+let PAGE_HEIGHT = 700;
+// The canvas size equals to the book dimensions + this padding
+let CANVAS_PADDING = 40;
+let epubFolder;
+let oebps;
+
 var epubReader = (function () {
+  let chaptersDictionary = [];
 
   var publicAPI = {
     unzipEpub: (source, target) => {
+      epubFolder = target;
       let resolvedPath = resolve(target);
       if (!fs.exists(resolvedPath)) {
         extract(source, {
@@ -22,20 +36,92 @@ var epubReader = (function () {
         });
       }
     },
-    loadEpubCanvas: () => {
-      // Dimensions of the whole book
-      let BOOK_WIDTH = 1280;
-      let BOOK_HEIGHT = 960;
+    loadChapters: (title, ctrl) => {
+      let chapters = fs.find('epubs', {
+        matching: title + '/**/*.xhtml'
+      });
+      oebps = chapters[0].split("\\")[2];
+      chapters.forEach((v, i) => {
+        let splitted = v.split("\\");
+        chaptersDictionary.push({
+          "chapter": splitted[splitted.length - 1],
+          "text": fs.read(v, "utf8")
+        });
+        ctrl.append(new Option(splitted[splitted.length - 1].split(".")[0], i));
+      });
 
-      // Dimensions of one page in the book
-      let PAGE_WIDTH = 640;
-      let PAGE_HEIGHT = 940;
+    },
+    createSections: () => {
+      let temp = document.createElement('html');
+      temp.innerHTML = chaptersDictionary[4].text;
+      let text = temp.getElementsByTagName("body")[0].innerHTML;
+      //let text = chaptersDictionary[0].text.getElementsByTagName("body").innerHTML;
+
+      let elems = $(text);
+      let sect = document.createElement('section');
+      let sectDiv = document.createElement('div');
+
+      for (let e of elems) {
+        if (e !== undefined) {
+          if (e.nodeName !== "#text") {
+            replaceRefs(e);
+            sectDiv.innerHTML += e.outerHTML;
+            sect.appendChild(sectDiv);
+            if (measure(sectDiv, function (el) {
+                return el.offsetHeight
+              }) >= BOOK_HEIGHT - PAGE_HEIGHT) {
+              //sectDiv.innerHTML -= e.innerHTML;
+              //sect.removeChild(sectDiv);
+              sect.appendChild(sectDiv);
+              document.getElementById("pages").appendChild(sect);
+              sect = document.createElement('section');
+              sectDiv = document.createElement('div');
+              sectDiv.innerHTML += e.outerHTML;
+              sect.appendChild(sectDiv);
+            }
+            //document.getElementById("pages").appendChild(sect);
+            //console.log(sect.offsetHeight);
+            //console.log(e);
+          }
+        }
+      }
+      //Last text
+      sect.appendChild(sectDiv);
+      document.getElementById("pages").appendChild(sect);
+
+      function measure(el, fn) {
+        let pV = el.style.visibility,
+          pP = el.style.position;
+
+        el.style.visibility = 'hidden';
+        el.style.position = 'absolute';
+
+        document.getElementById("pages").appendChild(el);
+        let result = fn(el);
+        el.parentNode.removeChild(el);
+
+        el.style.visibility = pV;
+        el.style.position = pP;
+        return result;
+      }
+
+      function replaceRefs(el) {
+        if (el.innerHTML != undefined && (el.innerHTML.indexOf("href=") > -1 || el.innerHTML.indexOf("src=") > -1)) {
+          if (el.innerHTML.indexOf("href=") > -1) {
+            el.innerHTML = el.innerHTML.replace('href="../', `href="${epubFolder}/${oebps}/`);
+          } else {
+            el.innerHTML = el.innerHTML.replace('src="../', `src="${epubFolder}/${oebps}/`);
+          }
+
+        }
+      }
+    },
+    loadEpubCanvas: () => {
 
       // Vertical spacing between the top edge of the book and the papers
       let PAGE_Y = (BOOK_HEIGHT - PAGE_HEIGHT) / 2;
 
-      // The canvas size equals to the book dimensions + this padding
-      let CANVAS_PADDING = 60;
+
 
       let page = 0;
       let canvas = document.getElementById("pageflip-canvas");
@@ -51,9 +137,9 @@ var epubReader = (function () {
 
       // List of all the page elements in the DOM
       let pages = book.getElementsByTagName("section");
-
+      let len = pages.length;
       // Organize the depth of our pages and create the flip definitions
-      for (let i = 0, len = pages.length; i < len; i++) {
+      for (let i = 0; i < len; i++) {
         pages[i].style.zIndex = len - i;
 
         flips.push({
@@ -82,6 +168,33 @@ var epubReader = (function () {
       document.addEventListener("mousemove", mouseMoveHandler, false);
       document.addEventListener("mousedown", mouseDownHandler, false);
       document.addEventListener("mouseup", mouseUpHandler, false);
+      document.addEventListener("keydown", keydownhandler, false);
+
+      function keydownhandler(e){
+        //Left arrow
+        if(e.keyCode == 37){
+          flips[page - 1].dragging = true;
+        }
+        //Right arrow
+        if(e.keyCode == 39){
+          flips[page].dragging = true;
+        }
+
+        for (let i = 0; i < flips.length; i++) {
+          if (flips[i].dragging) {
+            if(e.keyCode == 39){
+              flips[i].target = -1;
+              page = Math.min(page + 1, flips.length);
+            } else if(e.keyCode == 37){
+              flips[i].target = 1;
+              page = Math.max(page - 1, 0);
+            }
+          }
+
+          flips[i].dragging = false;
+        }
+
+      }
 
       function mouseMoveHandler(event) {
         // Offset mouse position so that the top of the book spine is 0,0
