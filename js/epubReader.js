@@ -10,36 +10,41 @@ $(function () {
     // }
 
     //Extract epub
-    epubReader.unzipEpub('./epubs/Hobbit.epub','./epubs/Hobbit');
+    epubReader.unzipEpub('./epubs/Hobbit.epub', './epubs/Hobbit');
     //Load chapters
-    epubReader.loadChapters('Hobbit',$("#ddlChapters"));
+    epubReader.loadChapters('Hobbit', $("#ddlChapters"));
     //Evento onchange select
     //Create sections
-epubReader.createSections();
+    epubReader.createSections();
     //Load Canvas
     epubReader.loadEpubCanvas();
 
-//read contents of zip file
-/*var zip2 = new JSZip();
-zip2.loadAsync(data)
-            .then(function (z) {
-$.each(z.files, function (index, zipEntry) {
-    var filename = "C:\/Epubs";
-    //create directory else create file
-    var path = getPath(filename);
-    if (filename.match(/\/$/)) {
-        //plugin is the embeded npapi-file-io plugin
-        plugin.createDirectory(path);
-    } else {
-        //problem is here
-        plugin.saveBinaryFile(path, zipEntry.asUint8Array());
-        //this is faster and works with the txt files but not images ect.
-        //plugin.saveTextFile(path, zipEntry.data);
-    }});
-});*/
+    document.getElementById("ddlChapters").addEventListener("click", function () {
+        console.log(this.options[this.selectedIndex].text);
+        epubReader.changeChapter(this.options[this.selectedIndex].text);
+    })
+
+    //read contents of zip file
+    /*var zip2 = new JSZip();
+    zip2.loadAsync(data)
+                .then(function (z) {
+    $.each(z.files, function (index, zipEntry) {
+        var filename = "C:\/Epubs";
+        //create directory else create file
+        var path = getPath(filename);
+        if (filename.match(/\/$/)) {
+            //plugin is the embeded npapi-file-io plugin
+            plugin.createDirectory(path);
+        } else {
+            //problem is here
+            plugin.saveBinaryFile(path, zipEntry.asUint8Array());
+            //this is faster and works with the txt files but not images ect.
+            //plugin.saveTextFile(path, zipEntry.data);
+        }});
+    });*/
 
 
-        /*var zip = new JSZip();
+    /*var zip = new JSZip();
         zip.loadAsync(data)
             .then(function (zip) {
                 let textos = [];
