@@ -1,4 +1,6 @@
-body, h2, p {
+body,
+h2,
+p {
 	margin: 0;
 	padding: 0;
 }
@@ -20,7 +22,7 @@ body {
 	margin-top: -200px;
 }
 
-#pages section {
+#pagesRight section {
 	background: url("./img/paper.png") no-repeat;
 	display: block;
 	width: 490px;
@@ -30,21 +32,53 @@ body {
 	top: 130px;
 	overflow: hidden;
 }
-	#pages section>div {
-		display: block;
-		width: 490px;
-		height: 700px;
-		font-size: 12px;
-	}
-	#pages section p,
-	#pages section h2 {
-		padding: 3px 35px;
-		line-height: 1.4em;
-		text-align: justify;
-	}
-	#pages section h2{
-		margin: 15px 0 10px;
-	}
+
+#pagesRight section>div {
+	display: block;
+	width: 490px;
+	height: 700px;
+	font-size: 12px;
+}
+
+#pagesRight section p,
+#pagesRight section h2 {
+	padding: 3px 35px;
+	line-height: 1.4em;
+	text-align: justify;
+}
+
+#pagesRight section h2 {
+	margin: 15px 0 10px;
+}
+
+#pagesLeft section {
+	background: url("./img/paper.png") no-repeat;
+	display: block;
+	width: 490px;
+	height: 700px;
+	position: absolute;
+	left: 149px;
+	top: 130px;
+	overflow: hidden;
+}
+
+#pagesLeft section>div {
+	display: block;
+	width: 490px;
+	height: 700px;
+	font-size: 12px;
+}
+
+#pagesLeft section p,
+#pagesLeft section h2 {
+	padding: 3px 35px;
+	line-height: 1.4em;
+	text-align: justify;
+}
+
+#pagesLeft section h2 {
+	margin: 15px 0 10px;
+}
 
 #pageflip-canvas {
 	position: absolute;

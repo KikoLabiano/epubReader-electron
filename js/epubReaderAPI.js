@@ -60,7 +60,7 @@ var epubReader = (function () {
       let elems = $(text);
       let sect = document.createElement('section');
       let sectDiv = document.createElement('div');
-
+      let i = 1;
       for (let e of elems) {
         if (e !== undefined) {
           if (e.nodeName !== "#text") {
@@ -69,11 +69,15 @@ var epubReader = (function () {
             sect.appendChild(sectDiv);
             if (measure(sectDiv, function (el) {
                 return el.offsetHeight
-              }) >= BOOK_HEIGHT - PAGE_HEIGHT) {
+              },i % 2) >= BOOK_HEIGHT - PAGE_HEIGHT) {
               //sectDiv.innerHTML -= e.innerHTML;
               //sect.removeChild(sectDiv);
               sect.appendChild(sectDiv);
-              document.getElementById("pages").appendChild(sect);
+              if (i % 2 == 0) {
+                document.getElementById("pagesRight").appendChild(sect);
+              } else {
+                document.getElementById("pagesLeft").appendChild(sect);
+              }
               sect = document.createElement('section');
               sectDiv = document.createElement('div');
               sectDiv.innerHTML += e.outerHTML;
@@ -82,21 +86,32 @@ var epubReader = (function () {
             //document.getElementById("pages").appendChild(sect);
             //console.log(sect.offsetHeight);
             //console.log(e);
+            i++;
           }
         }
+        
       }
       //Last text
       sect.appendChild(sectDiv);
-      document.getElementById("pages").appendChild(sect);
+      if (i % 2 == 0) {
+        document.getElementById("pagesRight").appendChild(sect);
+      } else {
+        document.getElementById("pagesLeft").appendChild(sect);
+      }
 
-      function measure(el, fn) {
+      function measure(el, fn, mod) {
         let pV = el.style.visibility,
           pP = el.style.position;
 
         el.style.visibility = 'hidden';
         el.style.position = 'absolute';
 
-        document.getElementById("pages").appendChild(el);
+        if(mod==0){
+          document.getElementById("pagesRight").appendChild(el);
+        }
+        else{
+          document.getElementById("pagesLeft").appendChild(el);
+        }
         let result = fn(el);
         el.parentNode.removeChild(el);
 
@@ -121,9 +136,8 @@ var epubReader = (function () {
       // Vertical spacing between the top edge of the book and the papers
       let PAGE_Y = (BOOK_HEIGHT - PAGE_HEIGHT) / 2;
 
-
-
-      let page = 0;
+      let pageRight = 0;
+      let pageLeft = 0;
       let canvas = document.getElementById("pageflip-canvas");
       let context = canvas.getContext("2d");
 
@@ -132,27 +146,43 @@ var epubReader = (function () {
         y: 0
       };
 
-      let flips = [];
+      let flipsRight = [];
+      let flipsLeft = [];
       let book = document.getElementById("book");
+      let pRight = document.getElementById("pagesRight");
+      let pLeft = document.getElementById("pagesLeft");
 
       // List of all the page elements in the DOM
-      let pages = book.getElementsByTagName("section");
-      let len = pages.length;
+      let pagesRight = pRight.getElementsByTagName("section");
+      let pagesLeft = pLeft.getElementsByTagName("section");
+      let lenRight = pagesRight.length;
+      let lenLeft = pagesLeft.length;
       // Organize the depth of our pages and create the flip definitions
-      for (let i = 0; i < len; i++) {
-        pages[i].style.zIndex = len - i;
+      for (let i = 0; i < lenRight; i++) {
+        pagesRight[i].style.zIndex = lenRight - i;
 
-        flips.push({
+        flipsRight.push({
           // Current progress of the flip (left -1 to right +1)
           progress: 1,
           // The target value towards which progress is always moving
           target: 1,
           // The page DOM element related to this flip
-          page: pages[i],
+          page: pagesRight[i],
           // True while the page is being dragged
           dragging: false
         });
       }
+
+      for (let i = 0; i < lenLeft; i++) {
+        pagesLeft[i].style.zIndex = lenLeft - i;
+        flipsLeft.push({
+          progress: 1,
+          target: 1,
+          page: pagesLeft[i],
+          dragging: false
+        });
+      }
+
 
       // Resize the canvas to match the book size
       canvas.width = BOOK_WIDTH + (CANVAS_PADDING * 2);
@@ -170,28 +200,35 @@ var epubReader = (function () {
       document.addEventListener("mouseup", mouseUpHandler, false);
       document.addEventListener("keydown", keydownhandler, false);
 
-      function keydownhandler(e){
+      function keydownhandler(e) {
         //Left arrow
-        if(e.keyCode == 37){
-          flips[page - 1].dragging = true;
+        if (e.keyCode == 37) {
+          flipsRight[pageRight - 1].dragging = true;
+          flipsLeft[pageLeft - 1].dragging = true;
         }
         //Right arrow
-        if(e.keyCode == 39){
-          flips[page].dragging = true;
+        if (e.keyCode == 39) {
+          flipsRight[pageRight].dragging = true;
+          flipsLeft[pageLeft].dragging = true;
         }
 
-        for (let i = 0; i < flips.length; i++) {
-          if (flips[i].dragging) {
-            if(e.keyCode == 39){
-              flips[i].target = -1;
-              page = Math.min(page + 1, flips.length);
-            } else if(e.keyCode == 37){
-              flips[i].target = 1;
-              page = Math.max(page - 1, 0);
+        for (let i = 0; i < flipsRight.length; i++) {
+          if (flipsRight[i].dragging) {
+            if (e.keyCode == 39) {
+              flipsRight[i].target = -1;
+              pageRight = Math.min(pageRight + 1, flipsRight.length);
+              flipsLeft[i].target = -1;
+              pageLeft = Math.min(pageLeft + 1, flipsLeft.length);
+            } else if (e.keyCode == 37) {
+              flipsRight[i].target = 1;
+              pageRight = Math.max(pageRight - 1, 0);
+              flipsLeft[i].target = 1;
+              pageLeft = Math.max(pageLeft - 1, 0);
             }
           }
 
-          flips[i].dragging = false;
+          flipsRight[i].dragging = false;
+          flipsLeft[i].dragging = false;
         }
 
       }
@@ -205,12 +242,14 @@ var epubReader = (function () {
       function mouseDownHandler(event) {
         // Make sure the mouse pointer is inside of the book
         if (Math.abs(mouse.x) < PAGE_WIDTH) {
-          if (mouse.x < 0 && page - 1 >= 0) {
+          if (mouse.x < 0 && pageRight - 1 >= 0) {
             // We are on the left side, drag the previous page
-            flips[page - 1].dragging = true;
-          } else if (mouse.x > 0 && page + 1 < flips.length) {
+            flipsRight[pageRight - 1].dragging = true;
+            flipsLeft[pageLeft - 1].dragging = true;
+          } else if (mouse.x > 0 && pageRight + 1 < flipsRight.length) {
             // We are on the right side, drag the current page
-            flips[page].dragging = true;
+            flipsRight[pageRight].dragging = true;
+            flipsLeft[pageLeft].dragging = true;
           }
         }
 
@@ -219,20 +258,25 @@ var epubReader = (function () {
       }
 
       function mouseUpHandler(event) {
-        for (let i = 0; i < flips.length; i++) {
+        for (let i = 0; i < flipsRight.length; i++) {
           // If this flip was being dragged, animate to its destination
-          if (flips[i].dragging) {
+          if (flipsRight[i].dragging) {
             // Figure out which page we should navigate to
             if (mouse.x < 0) {
-              flips[i].target = -1;
-              page = Math.min(page + 1, flips.length);
+              flipsRight[i].target = -1;
+              pageRight = Math.min(pageRight + 1, flipsRight.length);
+              flipsLeft[i].target = -1;
+              pageLeft = Math.min(pageLeft + 1, flipsLeft.length);
             } else {
-              flips[i].target = 1;
-              page = Math.max(page - 1, 0);
+              flipsRight[i].target = 1;
+              pageRight = Math.max(pageRight - 1, 0);
+              flipsLeft[i].target = 1;
+              pageLeft = Math.max(pageLeft - 1, 0);
             }
           }
 
-          flips[i].dragging = false;
+          flipsRight[i].dragging = false;
+          flipsLeft[i].dragging = false;
         }
       }
 
@@ -241,8 +285,26 @@ var epubReader = (function () {
         // Reset all pixels in the canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        for (let i = 0, len = flips.length; i < len; i++) {
-          let flip = flips[i];
+        for (let i = 0, len = flipsRight.length; i < lenRight; i++) {
+          let flip = flipsRight[i];
+
+          if (flip.dragging) {
+            flip.target = Math.max(Math.min(mouse.x / PAGE_WIDTH, 1), -1);
+          }
+
+          // Ease progress towards the target value 
+          flip.progress += (flip.target - flip.progress) * 0.2;
+
+          // If the flip is being dragged or is somewhere in the middle of the book, render it
+          if (flip.dragging || Math.abs(flip.progress) < 0.997) {
+            drawFlip(flip);
+          }
+
+        }
+
+
+        for (let i = 0, len = flipsLeft.length; i < lenLeft; i++) {
+          let flip = flipsLeft[i];
 
           if (flip.dragging) {
             flip.target = Math.max(Math.min(mouse.x / PAGE_WIDTH, 1), -1);
