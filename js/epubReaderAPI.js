@@ -21,6 +21,8 @@ let CANVAS_PADDING = 40;
 let epubFolder;
 let oebps;
 
+var flips = [];
+
 var epubReader = (function () {
   let chaptersDictionary = [];
 
@@ -49,45 +51,42 @@ var epubReader = (function () {
         });
         ctrl.append(new Option(splitted[splitted.length - 1].split(".")[0], i));
       });
-
     },
     createSections: () => {
-      let temp = document.createElement('html');
-      temp.innerHTML = chaptersDictionary[4].text;
-      let text = temp.getElementsByTagName("body")[0].innerHTML;
-      //let text = chaptersDictionary[0].text.getElementsByTagName("body").innerHTML;
 
-      let elems = $(text);
-      let sect = document.createElement('section');
-      let sectDiv = document.createElement('div');
+      for (let c of chaptersDictionary) {
 
-      for (let e of elems) {
-        if (e !== undefined) {
-          if (e.nodeName !== "#text") {
-            replaceRefs(e);
-            sectDiv.innerHTML += e.outerHTML;
-            sect.appendChild(sectDiv);
-            if (measure(sectDiv, function (el) {
-                return el.offsetHeight
-              }) >= BOOK_HEIGHT - PAGE_HEIGHT) {
-              //sectDiv.innerHTML -= e.innerHTML;
-              //sect.removeChild(sectDiv);
-              sect.appendChild(sectDiv);
-              document.getElementById("pages").appendChild(sect);
-              sect = document.createElement('section');
-              sectDiv = document.createElement('div');
+        let temp = document.createElement('html');
+        temp.innerHTML = c.text;
+        let text = temp.getElementsByTagName("body")[0].innerHTML;
+        let elems = $(text);
+        let sect = document.createElement('section');
+        let sectDiv = document.createElement('div');
+        sectDiv.setAttribute("name",c.chapter.split('.')[0]);
+        for (let e of elems) {
+          if (e !== undefined) {
+            if (e.nodeName !== "#text") {
+              replaceRefs(e);
               sectDiv.innerHTML += e.outerHTML;
               sect.appendChild(sectDiv);
+              if (measure(sectDiv, function (el) {
+                  return el.offsetHeight
+                }) >= BOOK_HEIGHT - PAGE_HEIGHT - CANVAS_PADDING) {
+                sect.appendChild(sectDiv);
+                document.getElementById("pages").appendChild(sect);
+                sect = document.createElement('section');
+                sectDiv = document.createElement('div');
+                sectDiv.innerHTML += e.outerHTML;
+                sect.appendChild(sectDiv);
+              }
             }
-            //document.getElementById("pages").appendChild(sect);
-            //console.log(sect.offsetHeight);
-            //console.log(e);
           }
         }
+        //Last text
+        sect.appendChild(sectDiv);
+        document.getElementById("pages").appendChild(sect);
+
       }
-      //Last text
-      sect.appendChild(sectDiv);
-      document.getElementById("pages").appendChild(sect);
 
       function measure(el, fn) {
         let pV = el.style.visibility,
@@ -112,7 +111,6 @@ var epubReader = (function () {
           } else {
             el.innerHTML = el.innerHTML.replace('src="../', `src="${epubFolder}/${oebps}/`);
           }
-
         }
       }
     },
@@ -120,8 +118,6 @@ var epubReader = (function () {
 
       // Vertical spacing between the top edge of the book and the papers
       let PAGE_Y = (BOOK_HEIGHT - PAGE_HEIGHT) / 2;
-
-
 
       let page = 0;
       let canvas = document.getElementById("pageflip-canvas");
@@ -132,7 +128,7 @@ var epubReader = (function () {
         y: 0
       };
 
-      let flips = [];
+      
       let book = document.getElementById("book");
 
       // List of all the page elements in the DOM
@@ -141,6 +137,7 @@ var epubReader = (function () {
       // Organize the depth of our pages and create the flip definitions
       for (let i = 0; i < len; i++) {
         pages[i].style.zIndex = len - i;
+        pages[i].style.display = "none";
 
         flips.push({
           // Current progress of the flip (left -1 to right +1)
@@ -153,6 +150,8 @@ var epubReader = (function () {
           dragging: false
         });
       }
+      //First page inline-block
+      pages[0].style.display = "inline-block";
 
       // Resize the canvas to match the book size
       canvas.width = BOOK_WIDTH + (CANVAS_PADDING * 2);
@@ -170,27 +169,33 @@ var epubReader = (function () {
       document.addEventListener("mouseup", mouseUpHandler, false);
       document.addEventListener("keydown", keydownhandler, false);
 
-      function keydownhandler(e){
+      function keydownhandler(e) {
         //Left arrow
-        if(e.keyCode == 37){
+        if (e.keyCode == 37) {
           flips[page - 1].dragging = true;
         }
         //Right arrow
-        if(e.keyCode == 39){
+        if (e.keyCode == 39) {
           flips[page].dragging = true;
         }
 
         for (let i = 0; i < flips.length; i++) {
           if (flips[i].dragging) {
-            if(e.keyCode == 39){
+            if (e.keyCode == 39) {
               flips[i].target = -1;
               page = Math.min(page + 1, flips.length);
-            } else if(e.keyCode == 37){
+              flips[page].page.style.display = "inline-block";
+              flips[page - 1].page.style.display = "none";
+            } else if (e.keyCode == 37) {
               flips[i].target = 1;
               page = Math.max(page - 1, 0);
+              flips[page].page.style.display = "inline-block";
+              flips[page + 1].page.style.display = "none";
             }
           }
-
+          // else{
+          //   flips[i].page.style.display = "none";
+          // }
           flips[i].dragging = false;
         }
 
@@ -207,15 +212,18 @@ var epubReader = (function () {
         if (Math.abs(mouse.x) < PAGE_WIDTH) {
           if (mouse.x < 0 && page - 1 >= 0) {
             // We are on the left side, drag the previous page
-            flips[page - 1].dragging = true;
+            flips[page - 1].dragging = true;            
           } else if (mouse.x > 0 && page + 1 < flips.length) {
             // We are on the right side, drag the current page
             flips[page].dragging = true;
+            flips[page + 1].page.style.display = "none";
           }
         }
 
         // Prevents the text selection
-        event.preventDefault();
+        if(mouse.x>= -BOOK_WIDTH/2 && mouse.x<=BOOK_WIDTH/2 && mouse.y<=BOOK_HEIGHT-PAGE_HEIGHT-CANVAS_PADDING && mouse.y>=PAGE_HEIGHT){
+          event.preventDefault();
+        }
       }
 
       function mouseUpHandler(event) {
@@ -226,11 +234,18 @@ var epubReader = (function () {
             if (mouse.x < 0) {
               flips[i].target = -1;
               page = Math.min(page + 1, flips.length);
+              flips[page].page.style.display = "inline-block";
+              flips[page - 1].page.style.display = "none";
             } else {
               flips[i].target = 1;
               page = Math.max(page - 1, 0);
+              flips[page].page.style.display = "inline-block";
+              flips[page + 1].page.style.display = "none";
             }
           }
+          // else{
+          //   flips[i].page.style.display = "none";
+          // }
 
           flips[i].dragging = false;
         }
@@ -347,6 +362,16 @@ var epubReader = (function () {
         context.restore();
       }
 
+    },
+    changeChapter:(chapter)=>{
+      for (let i = 0; i < flips.length; i++) {
+        if (flips[i].page.firstChild.outerHTML.indexOf("name=\"" + chapter + "\"")>-1) {
+          flips[i].page.style.display="inline-block";
+        }
+        else{
+          flips[i].page.style.display="none";
+        }
+      }
     }
   }
 

@@ -15,9 +15,14 @@ $(function () {
     epubReader.loadChapters('Hobbit',$("#ddlChapters"));
     //Evento onchange select
     //Create sections
-epubReader.createSections();
+    epubReader.createSections();
     //Load Canvas
     epubReader.loadEpubCanvas();
+
+    document.getElementById("ddlChapters").addEventListener("click",function(){
+        console.log(this.options[this.selectedIndex].text);
+        epubReader.changeChapter(this.options[this.selectedIndex].text);
+    })
 
 //read contents of zip file
 /*var zip2 = new JSZip();
