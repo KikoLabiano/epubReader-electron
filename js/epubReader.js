@@ -11,7 +11,11 @@ $(function () {
 
     //Extract epub
     epubReader.unzipEpub('./epubs/Hobbit.epub','./epubs/Hobbit');
+    //Load chapters
+    epubReader.loadChapters('Hobbit',$("#ddlChapters"));
+    //Evento onchange select
     //Create sections
+epubReader.createSections();
     //Load Canvas
     epubReader.loadEpubCanvas();
 
